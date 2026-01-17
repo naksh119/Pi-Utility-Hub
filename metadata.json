@@ -1,0 +1,5 @@
+{
+  "name": "Pi Utility Hub",
+  "description": "An all-in-one utility hub for the Pi Network ecosystem, featuring a Pi converter, mining reminders, wallet checker, and news feed.",
+  "requestFramePermissions": []
+}

@@ -152,8 +152,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </div>
 
         {/* Real-time Recharts Graph */}
-        <div className="h-28 w-full -ml-4">
-          <ResponsiveContainer width="100%" height="100%" minHeight={100}>
+        <div className="h-28 w-full -ml-4" style={{ minHeight: '112px' }}>
+          <ResponsiveContainer width="99%" height="100%" minHeight={100} minWidth={0}>
             <AreaChart data={chartData.length > 0 ? chartData : [{ time: '', price: 58 }]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">

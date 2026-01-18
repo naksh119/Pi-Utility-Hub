@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Use a promise with timeout for Pi.authenticate
             const authPromise = window.Pi.authenticate(scopes, onIncompletePaymentFound);
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Authentication Timed Out")), 15000)
+                setTimeout(() => reject(new Error("Authentication Timed Out")), 45000)
             );
 
             const authResult = await Promise.race([authPromise, timeoutPromise]) as any;

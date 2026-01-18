@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
 import { ShieldCheck, Search, Activity, Clock, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const WalletScreen: React.FC = () => {
+  const { user, authenticate } = useAuth();
   const [address, setAddress] = useState('');
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -19,6 +21,87 @@ const WalletScreen: React.FC = () => {
       });
       setChecking(false);
     }, 1500);
+  };
+
+  const handleInitiatePayment = async () => {
+    if (!window.Pi) {
+      alert("Pi SDK not found. Please open this in the Pi Browser.");
+      return;
+    }
+
+    if (!user || user.uid === 'guest-uid') {
+      const confirmAuth = window.confirm("You need to sign in with Pi to continue with payments. Sign in now?");
+      if (confirmAuth) {
+        try {
+          await authenticate();
+        } catch (err) {
+          alert("Authentication failed. Cannot proceed with payment.");
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+
+    try {
+      window.Pi.createPayment({
+        amount: 0.1,
+        memo: "Developer Checklist Step 10 Verification",
+        metadata: { type: "verification" }
+      }, {
+        onReadyForServerApproval: async (paymentId) => {
+          console.log("Payment ready for approval:", paymentId);
+          try {
+            const response = await fetch('/.netlify/functions/payment', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'approve', paymentId })
+            });
+            if (response.ok) {
+              console.log("Payment approved by server");
+            } else {
+              const errorData = await response.json();
+              console.error("Server approval failed:", errorData);
+              alert(`Approval Failed: ${errorData.error}`);
+            }
+          } catch (err) {
+            console.error("Network error during approval:", err);
+          }
+        },
+        onReadyForServerCompletion: async (paymentId, txid) => {
+          console.log("Payment ready for completion:", paymentId, txid);
+          try {
+            const response = await fetch('/.netlify/functions/payment', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'complete', paymentId, txid })
+            });
+            if (response.ok) {
+              console.log("Payment completed by server");
+              alert("Transaction Successful! You have passed the final step.");
+            } else {
+              const errorData = await response.json();
+              console.error("Server completion failed:", errorData);
+              alert(`Completion Failed: ${errorData.error}`);
+            }
+          } catch (err) {
+            console.error("Network error during completion:", err);
+          }
+        },
+        onCancel: (paymentId) => {
+          console.log("Payment cancelled:", paymentId);
+        },
+        onError: (error, paymentId) => {
+          console.error("Payment error:", error, paymentId);
+          if (error.message?.includes("scope")) {
+            alert("Error: Missing 'payments' scope. Please try logging in again.");
+          } else {
+            alert("Payment Error. Check console for details.");
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Payment initiation failed:", err);
+      alert("Failed to initiate payment. Check console.");
+    }
   };
 
   return (
@@ -120,68 +203,7 @@ const WalletScreen: React.FC = () => {
         </p>
 
         <button
-          onClick={() => {
-            if (!window.Pi) {
-              alert("Pi SDK not found. Please open this in the Pi Browser.");
-              return;
-            }
-
-            try {
-              window.Pi.createPayment({
-                amount: 0.1,
-                memo: "Developer Checklist Step 10 Verification",
-                metadata: { type: "verification" }
-              }, {
-                onReadyForServerApproval: async (paymentId) => {
-                  console.log("Payment ready for approval:", paymentId);
-                  try {
-                    const response = await fetch('/.netlify/functions/payment', {
-                      method: 'POST',
-                      body: JSON.stringify({ action: 'approve', paymentId })
-                    });
-                    if (response.ok) {
-                      console.log("Payment approved by server");
-                    } else {
-                      const errorData = await response.json();
-                      console.error("Server approval failed:", errorData);
-                      alert(`Approval Failed: ${errorData.error}`);
-                    }
-                  } catch (err) {
-                    console.error("Network error during approval:", err);
-                  }
-                },
-                onReadyForServerCompletion: async (paymentId, txid) => {
-                  console.log("Payment ready for completion:", paymentId, txid);
-                  try {
-                    const response = await fetch('/.netlify/functions/payment', {
-                      method: 'POST',
-                      body: JSON.stringify({ action: 'complete', paymentId, txid })
-                    });
-                    if (response.ok) {
-                      console.log("Payment completed by server");
-                      alert("Transaction Successful! You have passed the final step.");
-                    } else {
-                      const errorData = await response.json();
-                      console.error("Server completion failed:", errorData);
-                      alert(`Completion Failed: ${errorData.error}`);
-                    }
-                  } catch (err) {
-                    console.error("Network error during completion:", err);
-                  }
-                },
-                onCancel: (paymentId) => {
-                  console.log("Payment cancelled:", paymentId);
-                },
-                onError: (error, paymentId) => {
-                  console.error("Payment error:", error, paymentId);
-                  alert("Payment Error Check Console.");
-                }
-              });
-            } catch (err) {
-              console.error("Payment initiation failed:", err);
-              alert("Failed to initiate payment. Check console.");
-            }
-          }}
+          onClick={handleInitiatePayment}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-all"
         >
           INITIATE TRANSACTION (0.1 π)

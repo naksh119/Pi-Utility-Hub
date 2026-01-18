@@ -58,7 +58,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 try {
-                    window.Pi.init({ version: '2.0', sandbox: true });
+                    // Dynamically detect sandbox mode from URL or hostname
+                    const isSandbox = window.location.search.includes('sandbox=1') || window.location.hostname.includes('sandbox');
+                    window.Pi.init({ version: '2.0', sandbox: isSandbox });
+                    console.log(`Pi SDK initialized (sandbox: ${isSandbox})`);
                 } catch (e) {
                     // This block might still be relevant for other environment errors
                     throw e;

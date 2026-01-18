@@ -8,7 +8,6 @@ interface AuthContextType {
     error: string | null;
     loginAsGuest: () => void;
     authenticate: () => Promise<void>;
-    logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,7 +17,6 @@ const AuthContext = createContext<AuthContextType>({
     error: null,
     loginAsGuest: () => { },
     authenticate: async () => { },
-    logout: () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -38,12 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         setError(null);
         setLoading(false);
-    };
-
-    const logout = () => {
-        setUser(null);
-        setError(null);
-        localStorage.removeItem('user'); // Just in case it was stored elsewhere
     };
 
     const authenticate = async () => {
@@ -75,14 +67,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
 
-        // Check if SDK was initialized (via flag from index.html)
-        if (!(window as any).PiInitialized) {
-            console.warn("Pi SDK was not initialized in index.html (likely regular browser access)");
-            if (!isLocalhost && !isInIframe && !isPiUserAgent) {
-                setError("Pi Authentication is only available inside the Pi Browser. Please open this URL in the Pi Browser or click 'Continue as Guest'.");
-                setLoading(false);
-                return;
-            }
+        // Prevention for standalone production mode (which causes origin mismatch)
+        if (!isLocalhost && !isInIframe && isPiUserAgent) {
+            setError("Pi Authentication requires the Pi Sandbox for testing on Live URLs. Please visit https://sandbox.minepi.com, enter your URL, and try again.");
+            setLoading(false);
+            return;
         }
 
         setLoading(true);
@@ -135,15 +124,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 // Pi SDK is now initialized in index.html for better browser verification.
-                // We sync the initialization state from index.html
-                const sdkInitialized = (window as any).PiInitialized || false;
-                setIsInitialized(sdkInitialized);
-
-                if (sdkInitialized) {
-                    console.log("Pi SDK confirmed initialized in AuthContext");
-                } else {
-                    console.log("Pi SDK present but not initialized (expected if outside Pi Browser)");
-                }
+                // We just mark it as initialized here.
+                setIsInitialized(true);
+                console.log("Pi SDK confirmed in AuthContext");
             } catch (err) {
                 console.error('Pi SDK Initialization failed:', err);
                 if (isLocalhost) setIsInitialized(true);
@@ -172,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, error, loginAsGuest, authenticate, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, error, loginAsGuest, authenticate }}>
             {children}
         </AuthContext.Provider>
     );

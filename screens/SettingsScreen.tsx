@@ -31,7 +31,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
     const [currentView, setCurrentView] = useState<SettingsView>('main');
     const [notifications, setNotifications] = useState(true);
     const { theme, toggleTheme } = useTheme();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const darkMode = theme === 'dark';
     const [language, setLanguage] = useState('English');
 
@@ -315,7 +315,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
 
             {/* Danger Zone */}
             <div className="mt-8 mb-8">
-                <button className="w-full glass-card p-4 rounded-2xl flex items-center justify-center space-x-2 text-red-400 hover:bg-red-500/10 transition-colors border border-red-500/20">
+                <button
+                    onClick={logout}
+                    className="w-full glass-card p-4 rounded-2xl flex items-center justify-center space-x-2 text-red-400 hover:bg-red-500/10 transition-colors border border-red-500/20"
+                >
                     <LogOut size={18} />
                     <span className="font-bold">Sign Out</span>
                 </button>

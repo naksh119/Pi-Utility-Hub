@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pi Utility Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/jpeg" href="/assets/logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,22 +15,31 @@
     // Initialize Pi SDK immediately (SDK version 2.0)
     // This must happen at the very top of the page load to ensure "Verified" status in Pi Browser
     (function () {
+      window.PiInitialized = false;
       if (window.Pi) {
         try {
           // Dynamic sandbox detection: Only use sandbox mode if on localhost or inside an iframe (Sandbox)
           // Simply checking for netlify.app is incorrect as it causes origin mismatch in the real Pi Browser
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           const isInIframe = window.self !== window.top;
+          const isPiUserAgent = window.navigator.userAgent.toLowerCase().includes('pibrowser');
 
-          if (isLocal || isInIframe) {
-            const useSandbox = true; // Local or Iframe both use sandbox/mock bridge
-            window.Pi.init({ version: "2.0", sandbox: useSandbox });
-            console.log("Pi SDK 2.0 Initialized, sandbox:", useSandbox, " (Local:", isLocal, "Iframe:", isInIframe, ")");
+          if (isLocal || isInIframe || isPiUserAgent) {
+            const useSandbox = !isPiUserAgent || isInIframe || isLocal;
+            // Note: If it IS Pi Browser (userAgent check), we should generally trust it and use sandbox: false 
+            // unless we are specifically in a sandbox environment (iframe/local)
+            const actualSandbox = isLocal || isInIframe;
+
+            window.Pi.init({ version: "2.0", sandbox: actualSandbox });
+            window.PiInitialized = true;
+            console.log("Pi SDK 2.0 Initialized, sandbox:", actualSandbox, " (Local:", isLocal, "Iframe:", isInIframe, "PiBrowser:", isPiUserAgent, ")");
           } else {
-            console.log("Direct access detected on production URL. Pi SDK init skipped to prevent origin mismatch. Please use Pi Sandbox for testing.");
+            console.log("Direct access detected on production URL outside Pi Browser. Pi SDK init skipped to prevent origin mismatch. Please use Pi Sandbox for testing.");
           }
         } catch (e) {
           console.warn("Pi SDK init already called or failed:", e);
+          // If it was already called, we can assume it's initialized
+          window.PiInitialized = true;
         }
       } else {
         console.error("Pi SDK script not loaded correctly");

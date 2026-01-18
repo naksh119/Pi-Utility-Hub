@@ -64,28 +64,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
 
-        if (!isInitialized) {
-            setError("Pi SDK is initializing. Please wait a moment.");
-            return;
-        }
-
         setLoading(true);
         setError(null);
 
         try {
             console.log("Starting Pi Authentication...");
-            const scopes = ['username', 'payments'];
-            const onIncompletePaymentFound = (payment: any) => {
-                console.log('Incomplete payment found', payment);
-            };
 
-            // Use a promise with timeout for Pi.authenticate
-            const authPromise = window.Pi.authenticate(scopes, onIncompletePaymentFound);
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Authentication Timed Out")), 45000)
-            );
-
-            const authResult = await Promise.race([authPromise, timeoutPromise]) as any;
+            // Use the global helper defined in index.html for consistency
+            // but fallback to direct SDK call if helper is missing for some reason
+            const authResult = window.authenticatePi ?
+                await window.authenticatePi() :
+                await window.Pi.authenticate(['username', 'payments'], (p: any) => console.log('Incomplete payment:', p));
 
             console.log("Pi Auth Success:", authResult);
             if (authResult && authResult.user) {
@@ -119,26 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             try {
                 if (!window.Pi) {
-                    // On localhost, we can still proceed as initialized to allow mock login
                     if (isLocalhost) setIsInitialized(true);
                     setLoading(false);
                     return;
                 }
 
-                const isNetlify = window.location.hostname.includes('netlify.app');
-                const useSandbox = !isNetlify && !window.location.hostname.includes('piutilityapp.netlify.app');
-
-                try {
-                    // Note: window.Pi.init is generally synchronous but we wrap to be safe
-                    window.Pi.init({ version: '2.0', sandbox: useSandbox });
-                    console.log(`Pi SDK Initialized (sandbox: ${useSandbox})`);
-                } catch (e) {
-                    if (!(e instanceof Error && e.message.includes("already initialized"))) {
-                        console.warn("Pi SDK init warning:", e);
-                    }
-                }
-
+                // Pi SDK is now initialized in index.html for better browser verification.
+                // We just mark it as initialized here.
                 setIsInitialized(true);
+                console.log("Pi SDK confirmed in AuthContext");
             } catch (err) {
                 console.error('Pi SDK Initialization failed:', err);
                 if (isLocalhost) setIsInitialized(true);
@@ -147,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         };
 
-        // Wait for SDK to load
+        // Wait a brief moment for SDK script to execute if it hasn't yet
         let attempts = 0;
         const checkInterval = setInterval(() => {
             if (window.Pi) {

@@ -11,6 +11,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script>
+    // Initialize Pi SDK immediately (SDK version 2.0)
+    // This must happen at the very top of the page load to ensure "Verified" status in Pi Browser
+    (function () {
+      if (window.Pi) {
+        try {
+          window.Pi.init({ version: "2.0", sandbox: false });
+          console.log("Pi SDK 2.0 Initialized");
+        } catch (e) {
+          console.warn("Pi SDK already initialized");
+        }
+      }
+    })();
+
+    // Ensure Pi SDK is available globally for the app
+    window.authenticatePi = async () => {
+      if (!window.Pi) throw new Error("Pi SDK not available");
+      return window.Pi.authenticate(['username', 'payments'], (payment) => {
+        console.log('Incomplete payment found:', payment);
+      });
+    };
+
     (function () {
       const theme = localStorage.getItem('theme') || 'dark';
       document.documentElement.classList.add(theme);

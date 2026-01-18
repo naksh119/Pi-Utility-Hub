@@ -50,5 +50,6 @@ export interface PiPaymentCallbacks {
 declare global {
   interface Window {
     Pi: Pi;
+    authenticatePi: () => Promise<PiAuthResult>;
   }
 }

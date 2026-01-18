@@ -16,20 +16,34 @@
     (function () {
       if (window.Pi) {
         try {
-          window.Pi.init({ version: "2.0", sandbox: false });
-          console.log("Pi SDK 2.0 Initialized");
+          // Dynamic sandbox detection: Netlify subdomains and localhost require sandbox: true
+          // to avoid origin mismatch errors with the production bridge (minepi.com)
+          const isNetlify = window.location.hostname.includes('netlify.app');
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const useSandbox = isNetlify || isLocal;
+
+          window.Pi.init({ version: "2.0", sandbox: useSandbox });
+          console.log("Pi SDK 2.0 Initialized, sandbox:", useSandbox);
         } catch (e) {
-          console.warn("Pi SDK already initialized");
+          console.warn("Pi SDK init already called or failed:", e);
         }
+      } else {
+        console.error("Pi SDK script not loaded correctly");
       }
     })();
 
     // Ensure Pi SDK is available globally for the app
     window.authenticatePi = async () => {
       if (!window.Pi) throw new Error("Pi SDK not available");
-      return window.Pi.authenticate(['username', 'payments'], (payment) => {
-        console.log('Incomplete payment found:', payment);
-      });
+      try {
+        console.log("Calling Pi.authenticate via global helper...");
+        return await window.Pi.authenticate(['username', 'payments'], (payment) => {
+          console.log('Incomplete payment found:', payment);
+        });
+      } catch (err) {
+        console.error("Authentication helper error:", err);
+        throw err;
+      }
     };
 
     (function () {

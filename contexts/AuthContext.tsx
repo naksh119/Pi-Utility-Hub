@@ -6,6 +6,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     loading: boolean;
     error: string | null;
+    loginAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -13,6 +14,7 @@ const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
     loading: true,
     error: null,
+    loginAsGuest: () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -21,6 +23,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<PiUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const loginAsGuest = () => {
+        setUser({
+            username: "Guest_User",
+            uid: "guest-uid",
+            accessToken: "mock-token"
+        });
+        setError(null);
+        setLoading(false);
+    };
 
     useEffect(() => {
         const initPi = async () => {
@@ -39,20 +51,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     throw new Error("Pi SDK not loaded.");
                 }
 
+                if (isLocalhost) {
+                    console.info("Info: Pi SDK initialization skipped on localhost to avoid CORS errors. Use 'Continue as Guest' to login.");
+                    setLoading(false);
+                    return;
+                }
+
                 try {
                     window.Pi.init({ version: '2.0', sandbox: true });
                 } catch (e) {
-                    // If init fails (e.g. postMessage error), and we are on localhost, switch to mock
-                    if (isLocalhost) {
-                        console.warn("Pi.init failed on localhost. Using mock user.", e);
-                        setUser({
-                            username: "TestUser",
-                            uid: "test-uid-123",
-                            accessToken: "mock-token"
-                        });
-                        setLoading(false);
-                        return;
-                    }
+                    // This block might still be relevant for other environment errors
                     throw e;
                 }
 
@@ -106,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, error }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, error, loginAsGuest }}>
             {children}
         </AuthContext.Provider>
     );

@@ -117,7 +117,7 @@ const NewsScreen: React.FC = () => {
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           </button>
-          <button className="text-[10px] px-3 py-1 bg-white/5 rounded-full text-gray-400 font-bold">LATEST</button>
+          <button className="text-[10px] px-3 py-1 bg-gray-100 dark:bg-white/5 rounded-full text-gray-500 dark:text-gray-400 font-bold">LATEST</button>
           <button className="text-[10px] px-3 py-1 bg-orange-500 text-white rounded-full font-bold">LIVE</button>
         </div>
       </div>
@@ -136,7 +136,7 @@ const NewsScreen: React.FC = () => {
           const relativeTime = getRelativeTime(item.pubDate);
 
           return (
-            <div key={`${item.title}-${index}`} className="glass-card rounded-[2rem] overflow-hidden border border-white/5 transition-transform active:scale-[0.98]">
+            <div key={`${item.title}-${index}`} className="glass-card rounded-[2rem] overflow-hidden border border-gray-100 dark:border-white/5 transition-transform active:scale-[0.98]">
               <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-500/20 to-purple-500/20">
                 {item.thumbnail ? (
                   <img

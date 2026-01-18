@@ -20,10 +20,12 @@ import SettingsScreen from './screens/SettingsScreen';
 import { Screen } from './types';
 
 import { useAuth } from './contexts/AuthContext';
+import LoginScreen from './screens/LoginScreen';
+import logo from './assets/logo.jpg';
 // ... imports
 
 const App: React.FC = () => {
-  const { loading: authLoading, isAuthenticated, error, user } = useAuth();
+  const { loading: authLoading, isAuthenticated, error, user, loginAsGuest } = useAuth();
   const [minLoadTimePassed, setMinLoadTimePassed] = useState(false);
   const [activeScreen, setActiveScreen] = useState<Screen>('home');
 
@@ -40,17 +42,8 @@ const App: React.FC = () => {
     return <SplashScreen />;
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col h-screen bg-[#05070a] text-white items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
-          <Info className="text-red-500" size={32} />
-        </div>
-        <h1 className="text-xl font-bold mb-2">Authentication Failed</h1>
-        <p className="text-gray-400 mb-6">{error}</p>
-        <p className="text-sm text-gray-500">Please make sure you are opening this app in the Pi Browser.</p>
-      </div>
-    );
+  if (error || !isAuthenticated) {
+    return <LoginScreen />;
   }
 
   const renderScreen = () => {
@@ -66,7 +59,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#05070a] text-white overflow-hidden max-w-md mx-auto relative shadow-2xl">
+    <div className="flex flex-col h-screen bg-white dark:bg-[#05070a] text-gray-900 dark:text-white transition-colors duration-300 overflow-hidden max-w-md mx-auto relative shadow-2xl">
       {/* Background Decor */}
       <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-orange-500/10 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none"></div>
@@ -74,8 +67,8 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="px-6 pt-8 pb-4 flex items-center justify-between z-10">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <span className="text-2xl font-bold text-white">π</span>
+          <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shadow-lg shadow-orange-500/20 border border-white/10">
+            <img src={logo} alt="Pi" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight">Pi Utility Hub</h1>
@@ -98,7 +91,7 @@ const App: React.FC = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#0a0d12]/90 backdrop-blur-xl border-t border-white/5 px-4 pt-3 pb-8 flex justify-between items-center z-50">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 dark:bg-[#0a0d12]/90 backdrop-blur-xl border-t border-gray-200 dark:border-white/5 px-4 pt-3 pb-8 flex justify-between items-center z-50">
         <NavItem
           icon={<Home size={22} />}
           label="Home"

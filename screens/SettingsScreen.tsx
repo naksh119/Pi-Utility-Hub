@@ -12,15 +12,20 @@ import {
     ArrowLeft,
     Check,
     Mail,
-    FileText
+    FileText,
+    ExternalLink
 } from 'lucide-react';
+import { privacyPolicyContent } from '../data/privacyPolicy';
+import { helpSupportContent } from '../data/helpSupport';
+import { useTheme } from '../contexts/ThemeContext';
 
 type SettingsView = 'main' | 'language' | 'privacy' | 'help' | 'about';
 
 const SettingsScreen: React.FC = () => {
     const [currentView, setCurrentView] = useState<SettingsView>('main');
     const [notifications, setNotifications] = useState(true);
-    const [darkMode, setDarkMode] = useState(true);
+    const { theme, toggleTheme } = useTheme();
+    const darkMode = theme === 'dark';
     const [language, setLanguage] = useState('English');
 
     const renderHeader = () => (
@@ -68,62 +73,86 @@ const SettingsScreen: React.FC = () => {
     };
 
     const renderPrivacyView = () => (
-        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-            <div className="glass-card p-5 rounded-2xl space-y-4">
-                <h3 className="font-bold flex items-center space-x-2">
-                    <Shield size={18} className="text-orange-500" />
-                    <span>Data Privacy</span>
-                </h3>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                    We take your privacy seriously. All your personal data is encrypted and stored locally on your device where possible.
-                    We do not sell your personal information to third parties.
+        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-10">
+            <div className="glass-card p-6 rounded-2xl space-y-6">
+                <div className="flex items-center justify-between">
+                    <h3 className="font-bold flex items-center space-x-2 text-lg">
+                        <Shield size={20} className="text-orange-500" />
+                        <span>{privacyPolicyContent.title}</span>
+                    </h3>
+                    <span className="text-[10px] text-gray-500 italic">Updated: {privacyPolicyContent.lastUpdated}</span>
+                </div>
+
+                <div className="space-y-6 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar text-left">
+                    {privacyPolicyContent.sections.map((section) => (
+                        <div key={section.id} className="space-y-2">
+                            <h4 className="text-sm font-bold text-gray-200">{section.title}</h4>
+                            <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-line">
+                                {section.content}
+                            </p>
+                        </div>
+                    ))}
+
+                    <div className="h-[1px] bg-white/5 my-4" />
+
+                    {privacyPolicyContent.terms.map((term, index) => (
+                        <div key={index} className="space-y-2">
+                            <h4 className="text-sm font-bold text-gray-200">{term.title}</h4>
+                            <p className="text-xs text-gray-400 leading-relaxed">
+                                {term.content}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="pt-4 text-center">
+                    <button className="w-full py-3 bg-white/5 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors flex items-center justify-center space-x-2">
+                        <ExternalLink size={14} />
+                        <span>View Official Pi Network Privacy</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* SEO Keywords for transparency (hidden or subtle) */}
+            <div className="px-4 opacity-20 hover:opacity-100 transition-opacity">
+                <p className="text-[8px] text-gray-500 text-center">
+                    Keywords: Pi Network, Blockchain Security, Data Privacy, Web3 Ecosystem.
                 </p>
-
-                <div className="h-[1px] bg-white/5 my-4" />
-
-                <h3 className="font-bold">Terms of Service</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                    By using Pi Utility Hub, you agree to our terms of service which ensure a safe and compliant environment for all users within the Pi ecosystem.
-                </p>
-
-                <div className="h-[1px] bg-white/5 my-4" />
-
-                <button className="w-full py-2 bg-white/5 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors">
-                    View Full Privacy Policy
-                </button>
             </div>
         </div>
     );
 
     const renderHelpView = () => (
-        <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-            <div className="glass-card p-5 rounded-2xl space-y-4">
-                <h3 className="font-bold mb-2">FAQ</h3>
-                <div className="space-y-3">
-                    <details className="group">
-                        <summary className="flex justify-between items-center font-medium cursor-pointer list-none text-sm">
-                            <span>How do I sync my wallet?</span>
-                            <span className="transition group-open:rotate-180">
-                                <ChevronRight size={16} />
-                            </span>
-                        </summary>
-                        <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-                            Go to the Wallet tab and click "Sync" to update your balance relative to the Pi Mainnet.
-                        </p>
-                    </details>
-                    <div className="h-[1px] bg-white/5" />
-                    <details className="group">
-                        <summary className="flex justify-between items-center font-medium cursor-pointer list-none text-sm">
-                            <span>Is this app official?</span>
-                            <span className="transition group-open:rotate-180">
-                                <ChevronRight size={16} />
-                            </span>
-                        </summary>
-                        <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-                            This is a utility hub built for the Pi ecosystem but is not directly affiliated with the Pi Core Team.
-                        </p>
-                    </details>
-                </div>
+        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-10">
+            <div className="text-center px-4">
+                <h3 className="font-bold text-lg mb-1">{helpSupportContent.title}</h3>
+                <p className="text-[10px] text-gray-400 leading-relaxed">{helpSupportContent.description}</p>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+                {helpSupportContent.categories.map((category) => (
+                    <div key={category.id} className="glass-card p-5 rounded-2xl space-y-4">
+                        <h4 className="font-bold text-orange-500 text-sm">{category.title}</h4>
+                        <div className="space-y-3">
+                            {category.faqs.map((faq, fIndex) => (
+                                <div key={fIndex}>
+                                    <details className="group">
+                                        <summary className="flex justify-between items-center font-medium cursor-pointer list-none text-sm">
+                                            <span className="pr-4">{faq.q}</span>
+                                            <span className="transition-transform duration-300 group-open:rotate-180 shrink-0">
+                                                <ChevronRight size={16} />
+                                            </span>
+                                        </summary>
+                                        <p className="text-xs text-gray-400 mt-2 leading-relaxed pl-1 border-l-2 border-orange-500/20 py-1">
+                                            {faq.a}
+                                        </p>
+                                    </details>
+                                    {fIndex < category.faqs.length - 1 && <div className="h-[1px] bg-white/5 mt-3" />}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
 
             <div className="glass-card p-5 rounded-2xl flex items-center justify-between">
@@ -136,7 +165,20 @@ const SettingsScreen: React.FC = () => {
                         <p className="text-[10px] text-gray-400">help@piutilityhub.com</p>
                     </div>
                 </div>
-                <ChevronRight size={18} className="text-gray-500" />
+                <button
+                    onClick={() => window.location.href = 'mailto:help@piutilityhub.com'}
+                    className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+                >
+                    <ChevronRight size={18} className="text-gray-500" />
+                </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-center px-4">
+                {helpSupportContent.seoKeywords.map((kw, i) => (
+                    <span key={i} className="text-[8px] px-2 py-1 bg-white/5 rounded-full text-gray-500">
+                        #{kw.replace(/\s+/g, '')}
+                    </span>
+                ))}
             </div>
         </div>
     );
@@ -199,7 +241,7 @@ const SettingsScreen: React.FC = () => {
                         label="Dark Mode"
                         toggle
                         value={darkMode}
-                        onChange={() => setDarkMode(!darkMode)}
+                        onChange={toggleTheme}
                     />
                     <div className="h-[1px] bg-white/5 mx-4" />
                     <SettingItem

@@ -4,11 +4,14 @@ import { useAuth } from '../contexts/AuthContext';
 import logo from '../assets/logo.jpg';
 
 const LoginScreen: React.FC = () => {
-    const { loginAsGuest, error } = useAuth();
+    const { loginAsGuest, authenticate, loading, error } = useAuth();
 
-    const handlePiLogin = () => {
-        // Reloading usually triggers the auto-auth in AuthContext
-        window.location.reload();
+    const handlePiLogin = async () => {
+        try {
+            await authenticate();
+        } catch (err) {
+            console.error("Login component error:", err);
+        }
     };
 
     return (
@@ -49,15 +52,26 @@ const LoginScreen: React.FC = () => {
                 <div className="w-full space-y-3 pt-4">
                     <button
                         onClick={handlePiLogin}
-                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl font-bold text-white shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+                        disabled={loading}
+                        className={`w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl font-bold text-white shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        <ShieldCheck size={20} />
-                        <span>Login with Pi Network</span>
+                        {loading ? (
+                            <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                <span>Connecting...</span>
+                            </div>
+                        ) : (
+                            <>
+                                <ShieldCheck size={20} />
+                                <span>Login with Pi Network</span>
+                            </>
+                        )}
                     </button>
 
                     <button
                         onClick={loginAsGuest}
-                        className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-semibold text-gray-300 transition-all flex items-center justify-center space-x-2"
+                        disabled={loading}
+                        className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-semibold text-gray-300 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
                     >
                         <User size={20} />
                         <span>Continue as Guest</span>

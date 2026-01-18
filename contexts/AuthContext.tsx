@@ -7,6 +7,7 @@ interface AuthContextType {
     loading: boolean;
     error: string | null;
     loginAsGuest: () => void;
+    authenticate: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType>({
     loading: true,
     error: null,
     loginAsGuest: () => { },
+    authenticate: async () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -23,6 +25,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<PiUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const loginAsGuest = () => {
         setUser({
@@ -34,75 +38,116 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
     };
 
+    const authenticate = async () => {
+        // Essential environment check
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isInPiBrowser = window.navigator.userAgent.toLowerCase().includes('pibrowser') ||
+            (window.Pi && window.self !== window.top);
+
+        // Shortcut for localhost if NOT in Pi Browser/Sandbox
+        if (isLocalhost && !isInPiBrowser) {
+            console.log("Localhost detected outside Pi Browser. Using instant mock login.");
+            setLoading(true);
+            await new Promise(r => setTimeout(r, 600)); // Brief delay for UX
+            setUser({
+                username: "Local_Dev",
+                uid: "local-dev-uid",
+                accessToken: "local-token"
+            });
+            setError(null);
+            setLoading(false);
+            return;
+        }
+
+        if (!window.Pi) {
+            setError("Pi SDK not loaded. Please use the Pi Browser to login.");
+            return;
+        }
+
+        if (!isInitialized) {
+            setError("Pi SDK is initializing. Please wait a moment.");
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            console.log("Starting Pi Authentication...");
+            const scopes = ['username', 'payments'];
+            const onIncompletePaymentFound = (payment: any) => {
+                console.log('Incomplete payment found', payment);
+            };
+
+            // Use a promise with timeout for Pi.authenticate
+            const authPromise = window.Pi.authenticate(scopes, onIncompletePaymentFound);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Authentication Timed Out")), 15000)
+            );
+
+            const authResult = await Promise.race([authPromise, timeoutPromise]) as any;
+
+            console.log("Pi Auth Success:", authResult);
+            if (authResult && authResult.user) {
+                setUser(authResult.user);
+            } else {
+                throw new Error("Invalid response from Pi Network");
+            }
+        } catch (err) {
+            console.error('Pi Authentication error:', err);
+            const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+            setError(errorMessage);
+
+            // Final fallback for dev environments
+            if (isLocalhost) {
+                console.warn("Dev mode fallback: Authentication failed, providing mock user.");
+                setUser({
+                    username: "Dev_Fallback",
+                    uid: "dev-uid",
+                    accessToken: "mock-token"
+                });
+                setError(null);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         const initPi = async () => {
-            try {
-                // Environment detection
-                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                const isNetlify = window.location.hostname.includes('netlify.app');
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-                if (isLocalhost) {
-                    console.log("Running on localhost. Pi SDK initialization skipped to avoid CORS/Origin errors.");
+            try {
+                if (!window.Pi) {
+                    // On localhost, we can still proceed as initialized to allow mock login
+                    if (isLocalhost) setIsInitialized(true);
                     setLoading(false);
                     return;
                 }
 
-                if (!window.Pi) {
-                    throw new Error("Pi SDK not loaded.");
-                }
-
-                // If on Netlify or a custom domain, sandbox should likely be false unless we are testing
-                // The error "The target origin provided ('https://app-cdn.minepi.com') does not match the recipient window's origin"
-                // often happens when sandbox: true is used outside the actual Pi Sandbox environment.
+                const isNetlify = window.location.hostname.includes('netlify.app');
                 const useSandbox = !isNetlify && !window.location.hostname.includes('piutilityapp.netlify.app');
 
                 try {
-                    // Initialize SDK
+                    // Note: window.Pi.init is generally synchronous but we wrap to be safe
                     window.Pi.init({ version: '2.0', sandbox: useSandbox });
-                    console.log(`Pi SDK initialized (sandbox: ${useSandbox})`);
+                    console.log(`Pi SDK Initialized (sandbox: ${useSandbox})`);
                 } catch (e) {
-                    console.warn("Pi SDK already initialized or failed to init:", e);
+                    if (!(e instanceof Error && e.message.includes("already initialized"))) {
+                        console.warn("Pi SDK init warning:", e);
+                    }
                 }
 
-                const scopes = ['username', 'payments'];
-                const onIncompletePaymentFound = (payment: any) => {
-                    console.log('Incomplete payment found', payment);
-                };
-
-                // Add a timeout for authentication to prevent infinite loading if SDK hangs
-                const authPromise = window.Pi.authenticate(scopes, onIncompletePaymentFound);
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Authentication timed out")), 10000)
-                );
-
-                const authResult = await Promise.race([authPromise, timeoutPromise]) as any;
-
-                console.log("Pi Auth Result:", authResult);
-                if (authResult && authResult.user) {
-                    setUser(authResult.user);
-                } else {
-                    throw new Error("Invalid authentication result");
-                }
+                setIsInitialized(true);
             } catch (err) {
-                console.error('Pi Authentication failed:', err);
-
-                // Fallback for non-Pi environments or errors
-                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                const isNetlify = window.location.hostname.includes('netlify.app');
-
-                if (isLocalhost || isNetlify) {
-                    // We don't automatically set user for Netlify unless it's a known debug state
-                    // But we clear the error so the user can use Guest mode if they choose
-                    setError(err instanceof Error ? err.message : 'Authentication failed');
-                } else {
-                    setError(err instanceof Error ? err.message : 'Authentication failed');
-                }
+                console.error('Pi SDK Initialization failed:', err);
+                if (isLocalhost) setIsInitialized(true);
             } finally {
                 setLoading(false);
             }
         };
 
-        // Retry mechanism to wait for SDK to load
+        // Wait for SDK to load
         let attempts = 0;
         const checkInterval = setInterval(() => {
             if (window.Pi) {
@@ -112,7 +157,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 attempts++;
                 if (attempts > 30) { // 3 seconds
                     clearInterval(checkInterval);
-                    initPi(); // Try anyway to trigger error handling
+                    console.warn("Pi SDK load timeout.");
+                    setLoading(false);
                 }
             }
         }, 100);
@@ -121,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, error, loginAsGuest }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, error, loginAsGuest, authenticate }}>
             {children}
         </AuthContext.Provider>
     );

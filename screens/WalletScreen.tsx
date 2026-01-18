@@ -135,29 +135,38 @@ const WalletScreen: React.FC = () => {
                 onReadyForServerApproval: async (paymentId) => {
                   console.log("Payment ready for approval:", paymentId);
                   try {
-                    const res = await fetch('/.netlify/functions/pi-approve', {
+                    const response = await fetch('/.netlify/functions/payment', {
                       method: 'POST',
-                      body: JSON.stringify({ paymentId }),
+                      body: JSON.stringify({ action: 'approve', paymentId })
                     });
-                    if (!res.ok) throw new Error("Approval failed on server");
-                    console.log("Payment approved by server");
+                    if (response.ok) {
+                      console.log("Payment approved by server");
+                    } else {
+                      const errorData = await response.json();
+                      console.error("Server approval failed:", errorData);
+                      alert(`Approval Failed: ${errorData.error}`);
+                    }
                   } catch (err) {
-                    console.error("Approval error:", err);
-                    alert("Server failed to approve payment. Make sure PI_API_KEY is set.");
+                    console.error("Network error during approval:", err);
                   }
                 },
                 onReadyForServerCompletion: async (paymentId, txid) => {
                   console.log("Payment ready for completion:", paymentId, txid);
                   try {
-                    const res = await fetch('/.netlify/functions/pi-complete', {
+                    const response = await fetch('/.netlify/functions/payment', {
                       method: 'POST',
-                      body: JSON.stringify({ paymentId, txid }),
+                      body: JSON.stringify({ action: 'complete', paymentId, txid })
                     });
-                    if (!res.ok) throw new Error("Completion failed on server");
-                    alert("Payment Successfully Processed and Completed on Chain!");
+                    if (response.ok) {
+                      console.log("Payment completed by server");
+                      alert("Transaction Successful! You have passed the final step.");
+                    } else {
+                      const errorData = await response.json();
+                      console.error("Server completion failed:", errorData);
+                      alert(`Completion Failed: ${errorData.error}`);
+                    }
                   } catch (err) {
-                    console.error("Completion error:", err);
-                    alert("Payment was submitted to chain but server failed to verify it.");
+                    console.error("Network error during completion:", err);
                   }
                 },
                 onCancel: (paymentId) => {
@@ -165,7 +174,7 @@ const WalletScreen: React.FC = () => {
                 },
                 onError: (error, paymentId) => {
                   console.error("Payment error:", error, paymentId);
-                  alert("Payment Error: " + error.message);
+                  alert("Payment Error Check Console.");
                 }
               });
             } catch (err) {

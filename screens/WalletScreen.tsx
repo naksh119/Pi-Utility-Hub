@@ -37,8 +37,8 @@ const WalletScreen: React.FC = () => {
 
         <div className="space-y-4">
           <div className="relative">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Enter Pi Wallet Address..."
@@ -47,7 +47,7 @@ const WalletScreen: React.FC = () => {
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
           </div>
 
-          <button 
+          <button
             onClick={handleCheck}
             disabled={checking || !address}
             className={`w-full py-4 rounded-2xl font-bold transition-all shadow-lg ${checking || !address ? 'bg-gray-800 text-gray-500' : 'bg-gradient-to-r from-orange-400 to-orange-600 text-white shadow-orange-500/20 active:scale-95'}`}
@@ -105,6 +105,79 @@ const WalletScreen: React.FC = () => {
           </p>
         </div>
       )}
+
+      {/* Developer Verification Section */}
+      <div className="glass-card p-6 rounded-[2.5rem] border border-cyan-500/20 space-y-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+            <Activity size={22} className="text-cyan-400" />
+          </div>
+          <h2 className="text-xl font-bold">Transaction Test</h2>
+        </div>
+
+        <p className="text-xs text-gray-500">
+          This section helps you pass <b>Step 10</b> of the Pi Developer Checklist. Tap below to initiate a small payment (0.1 Pi).
+        </p>
+
+        <button
+          onClick={() => {
+            if (!window.Pi) {
+              alert("Pi SDK not found. Please open this in the Pi Browser.");
+              return;
+            }
+
+            try {
+              window.Pi.createPayment({
+                amount: 0.1,
+                memo: "Developer Checklist Step 10 Verification",
+                metadata: { type: "verification" }
+              }, {
+                onReadyForServerApproval: async (paymentId) => {
+                  console.log("Payment ready for approval:", paymentId);
+                  try {
+                    const res = await fetch('/.netlify/functions/pi-approve', {
+                      method: 'POST',
+                      body: JSON.stringify({ paymentId }),
+                    });
+                    if (!res.ok) throw new Error("Approval failed on server");
+                    console.log("Payment approved by server");
+                  } catch (err) {
+                    console.error("Approval error:", err);
+                    alert("Server failed to approve payment. Make sure PI_API_KEY is set.");
+                  }
+                },
+                onReadyForServerCompletion: async (paymentId, txid) => {
+                  console.log("Payment ready for completion:", paymentId, txid);
+                  try {
+                    const res = await fetch('/.netlify/functions/pi-complete', {
+                      method: 'POST',
+                      body: JSON.stringify({ paymentId, txid }),
+                    });
+                    if (!res.ok) throw new Error("Completion failed on server");
+                    alert("Payment Successfully Processed and Completed on Chain!");
+                  } catch (err) {
+                    console.error("Completion error:", err);
+                    alert("Payment was submitted to chain but server failed to verify it.");
+                  }
+                },
+                onCancel: (paymentId) => {
+                  console.log("Payment cancelled:", paymentId);
+                },
+                onError: (error, paymentId) => {
+                  console.error("Payment error:", error, paymentId);
+                  alert("Payment Error: " + error.message);
+                }
+              });
+            } catch (err) {
+              console.error("Payment initiation failed:", err);
+              alert("Failed to initiate payment. Check console.");
+            }
+          }}
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-all"
+        >
+          INITIATE TRANSACTION (0.1 π)
+        </button>
+      </div>
     </div>
   );
 };

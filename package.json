@@ -14,7 +14,8 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "recharts": "^3.6.0",
-    "use-sync-external-store": "^1.6.0"
+    "use-sync-external-store": "^1.6.0",
+    "@netlify/functions": "^2.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

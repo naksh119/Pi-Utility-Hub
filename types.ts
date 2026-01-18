@@ -31,6 +31,20 @@ export interface PiAuthResult {
 interface Pi {
   init(options: { version: string; sandbox: boolean }): void;
   authenticate(scopes: string[], onIncompletePaymentFound: (payment: any) => void): Promise<PiAuthResult>;
+  createPayment(paymentData: PiPaymentData, callbacks: PiPaymentCallbacks): void;
+}
+
+export interface PiPaymentData {
+  amount: number;
+  memo: string;
+  metadata: Object;
+}
+
+export interface PiPaymentCallbacks {
+  onReadyForServerApproval: (paymentId: string) => void;
+  onReadyForServerCompletion: (paymentId: string, txid: string) => void;
+  onCancel: (paymentId: string) => void;
+  onError: (error: Error, paymentId?: string) => void;
 }
 
 declare global {

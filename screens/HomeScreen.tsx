@@ -153,7 +153,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
         {/* Real-time Recharts Graph */}
         <div className="h-28 w-full -ml-4">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minHeight={100}>
             <AreaChart data={chartData.length > 0 ? chartData : [{ time: '', price: 58 }]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
@@ -245,21 +245,46 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* 5. Utility Insight Card */}
-      <div className="p-5 rounded-[2.5rem] bg-orange-500/5 border border-orange-500/10 relative overflow-hidden">
-        <div className="absolute -right-4 -bottom-4 opacity-5">
-          <AlertCircle size={80} className="text-orange-500" />
+      {/* 5. Ecosystem Insights Card (SEO Ready) */}
+      <div className="p-6 rounded-[2.5rem] bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/10 relative overflow-hidden">
+        <div className="absolute -right-6 -bottom-6 opacity-10 rotate-12">
+          <Zap size={120} className="text-orange-500" />
         </div>
-        <div className="flex items-start space-x-3">
-          <div className="p-2 rounded-xl bg-orange-500/10 mt-1">
-            <Info size={16} className="text-orange-400" />
+
+        <div className="relative z-10">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 rounded-xl bg-orange-500/20">
+              <Activity size={18} className="text-orange-400" />
+            </div>
+            <h4 className="text-sm font-black text-white uppercase tracking-wider">Ecosystem Insights</h4>
           </div>
-          <div>
-            <h4 className="text-xs font-black text-orange-400 uppercase tracking-widest mb-1">Pioneer Security Tip</h4>
-            <p className="text-[11px] text-gray-400 leading-relaxed italic">
-              "Never share your 24-word passphrase with anyone. Pi Core Team will never ask for your passphrase."
-            </p>
+
+          <div className="grid grid-cols-1 gap-3">
+            <div className="flex items-start space-x-3 bg-white/5 p-3 rounded-2xl border border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
+              <p className="text-[11px] text-gray-300 leading-snug">
+                Monitor <span className="text-orange-400 font-bold">Pi Price Live</span> trends and market analysis directly from the dashboard.
+              </p>
+            </div>
+
+            <div className="flex items-start space-x-3 bg-white/5 p-3 rounded-2xl border border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-1.5 shadow-[0_0_8px_rgba(6,182,212,0.6)]"></div>
+              <p className="text-[11px] text-gray-300 leading-snug">
+                Stay updated on <span className="text-cyan-400 font-bold">Mainnet Migration</span> metrics for the global Pi Network ecosystem.
+              </p>
+            </div>
+
+            <div className="flex items-start space-x-3 bg-white/5 p-3 rounded-2xl border border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+              <p className="text-[11px] text-gray-300 leading-snug">
+                Enhance your <span className="text-emerald-400 font-bold">Pi Wallet Security</span> using our advanced shield and verification protocols.
+              </p>
+            </div>
           </div>
+
+          <p className="mt-4 text-[10px] text-gray-500 text-center font-medium italic">
+            Your Trusted <span className="text-orange-400/80">Pi Utility Hub</span> for Every Pioneer.
+          </p>
         </div>
       </div>
     </div>

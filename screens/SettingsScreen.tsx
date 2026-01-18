@@ -21,7 +21,11 @@ import { useTheme } from '../contexts/ThemeContext';
 
 type SettingsView = 'main' | 'language' | 'privacy' | 'help' | 'about';
 
-const SettingsScreen: React.FC = () => {
+interface SettingsScreenProps {
+    onNavigate?: (screen: any) => void;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
     const [currentView, setCurrentView] = useState<SettingsView>('main');
     const [notifications, setNotifications] = useState(true);
     const { theme, toggleTheme } = useTheme();
@@ -105,7 +109,21 @@ const SettingsScreen: React.FC = () => {
                     ))}
                 </div>
 
-                <div className="pt-4 text-center">
+                <div className="pt-4 space-y-3">
+                    <button
+                        onClick={() => onNavigate?.('privacy')}
+                        className="w-full py-3 bg-orange-500/10 border border-orange-500/20 rounded-xl text-xs font-bold text-orange-500 hover:bg-orange-500/20 transition-colors flex items-center justify-center space-x-2"
+                    >
+                        <Shield size={14} />
+                        <span>Full Privacy Policy Page</span>
+                    </button>
+                    <button
+                        onClick={() => onNavigate?.('terms')}
+                        className="w-full py-3 bg-white/5 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors flex items-center justify-center space-x-2"
+                    >
+                        <FileText size={14} />
+                        <span>Terms of Service Page</span>
+                    </button>
                     <button className="w-full py-3 bg-white/5 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors flex items-center justify-center space-x-2">
                         <ExternalLink size={14} />
                         <span>View Official Pi Network Privacy</span>

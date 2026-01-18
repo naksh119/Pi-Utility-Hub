@@ -15,7 +15,7 @@ export interface WalletInfo {
   status: 'Active' | 'Inactive';
 }
 
-export type Screen = 'home' | 'converter' | 'reminder' | 'wallet' | 'news' | 'settings';
+export type Screen = 'home' | 'converter' | 'reminder' | 'wallet' | 'news' | 'settings' | 'privacy' | 'terms';
 
 export interface PiUser {
   username: string;

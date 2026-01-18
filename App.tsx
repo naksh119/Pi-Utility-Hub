@@ -17,6 +17,8 @@ import ReminderScreen from './screens/ReminderScreen';
 import WalletScreen from './screens/WalletScreen';
 import NewsScreen from './screens/NewsScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
 import { Screen } from './types';
 
 import { useAuth } from './contexts/AuthContext';
@@ -30,11 +32,30 @@ const App: React.FC = () => {
   const [activeScreen, setActiveScreen] = useState<Screen>('home');
 
   useEffect(() => {
+    // Basic routing
+    const path = window.location.pathname;
+    if (path === '/privacy-policy') {
+      setActiveScreen('privacy');
+    } else if (path === '/terms') {
+      setActiveScreen('terms');
+    }
+
     const timer = setTimeout(() => {
       setMinLoadTimePassed(true);
     }, 2000); // Reduced to 2s for better UX
     return () => clearTimeout(timer);
   }, []);
+
+  // Update URL without reload when activeScreen changes
+  useEffect(() => {
+    if (activeScreen === 'privacy') {
+      window.history.pushState({}, '', '/privacy-policy');
+    } else if (activeScreen === 'terms') {
+      window.history.pushState({}, '', '/terms');
+    } else if (activeScreen === 'home') {
+      window.history.pushState({}, '', '/');
+    }
+  }, [activeScreen]);
 
   const isLoading = authLoading || !minLoadTimePassed;
 
@@ -53,7 +74,9 @@ const App: React.FC = () => {
       case 'reminder': return <ReminderScreen />;
       case 'wallet': return <WalletScreen />;
       case 'news': return <NewsScreen />;
-      case 'settings': return <SettingsScreen />;
+      case 'settings': return <SettingsScreen onNavigate={setActiveScreen} />;
+      case 'privacy': return <PrivacyPolicyScreen onBack={() => setActiveScreen('settings')} />;
+      case 'terms': return <TermsOfServiceScreen onBack={() => setActiveScreen('settings')} />;
       default: return <HomeScreen onNavigate={setActiveScreen} />;
     }
   };

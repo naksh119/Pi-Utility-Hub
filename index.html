@@ -16,14 +16,14 @@
     (function () {
       if (window.Pi) {
         try {
-          // Dynamic sandbox detection: Netlify subdomains and localhost require sandbox: true
-          // to avoid origin mismatch errors with the production bridge (minepi.com)
-          const isNetlify = window.location.hostname.includes('netlify.app');
+          // Dynamic sandbox detection: Only use sandbox mode if on localhost or inside an iframe (Sandbox)
+          // Simply checking for netlify.app is incorrect as it causes origin mismatch in the real Pi Browser
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-          const useSandbox = isNetlify || isLocal;
+          const isInIframe = window.self !== window.top;
+          const useSandbox = isLocal || isInIframe;
 
           window.Pi.init({ version: "2.0", sandbox: useSandbox });
-          console.log("Pi SDK 2.0 Initialized, sandbox:", useSandbox);
+          console.log("Pi SDK 2.0 Initialized, sandbox:", useSandbox, " (Local:", isLocal, "Iframe:", isInIframe, ")");
         } catch (e) {
           console.warn("Pi SDK init already called or failed:", e);
         }

@@ -41,12 +41,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const authenticate = async () => {
         // Essential environment check
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isInPiBrowser = window.navigator.userAgent.toLowerCase().includes('pibrowser') ||
-            (window.Pi && window.self !== window.top);
+        const isInIframe = window.self !== window.top;
+        const isPiUserAgent = window.navigator.userAgent.toLowerCase().includes('pibrowser');
+        const isInSandbox = isLocalhost || isInIframe;
+
+        console.log("Environment check:", { isLocalhost, isInIframe, isPiUserAgent, isInSandbox });
 
         // Shortcut for localhost if NOT in Pi Browser/Sandbox
-        if (isLocalhost && !isInPiBrowser) {
-            console.log("Localhost detected outside Pi Browser. Using instant mock login.");
+        if (isLocalhost && !isPiUserAgent && !isInIframe) {
+            console.log("Localhost detected outside Pi Browser/Sandbox. Using instant mock login.");
             setLoading(true);
             await new Promise(r => setTimeout(r, 600)); // Brief delay for UX
             setUser({

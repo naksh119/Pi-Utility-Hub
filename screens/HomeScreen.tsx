@@ -26,6 +26,7 @@ import {
 import { Screen } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchCurrentPiPrice, fetchPiPriceHistory, PiPriceData, ChartPoint } from '../utils/piPriceApi';
+import Skeleton from '../components/Skeleton';
 
 interface HomeScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -73,11 +74,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-              <span className="text-xl font-bold">{user?.username?.[0].toUpperCase() || 'P'}</span>
+              {isLoading ? <Skeleton variant="rect" width="100%" height="100%" className="rounded-2xl" /> : <span className="text-xl font-bold">{user?.username?.[0].toUpperCase() || 'P'}</span>}
             </div>
             <div>
               <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">Mining Node</p>
-              <h2 className="text-lg font-bold">@{user?.username || 'Pioneer'}</h2>
+              {isLoading ? <Skeleton width="80px" height="18px" /> : <h2 className="text-lg font-bold">@{user?.username || 'Pioneer'}</h2>}
             </div>
           </div>
           <div className="flex flex-col items-end">
@@ -93,15 +94,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
             <p className="text-[10px] text-gray-400 mb-1">Total Balance</p>
             <div className="flex items-baseline space-x-1 text-orange-500">
-              <span className="text-xl font-black">124.50</span>
-              <span className="text-xs font-bold">π</span>
+              {isLoading ? <Skeleton width="60px" height="24px" /> : (
+                <>
+                  <span className="text-xl font-black">124.50</span>
+                  <span className="text-xs font-bold">π</span>
+                </>
+              )}
             </div>
           </div>
           <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
             <p className="text-[10px] text-gray-400 mb-1">Mining Rate</p>
             <div className="flex items-baseline space-x-1 text-cyan-500">
-              <span className="text-xl font-black">0.25</span>
-              <span className="text-xs font-bold">π/h</span>
+              {isLoading ? <Skeleton width="50px" height="24px" /> : (
+                <>
+                  <span className="text-xl font-black">0.25</span>
+                  <span className="text-xs font-bold">π/h</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -132,15 +141,24 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
         <div className="mb-6 flex justify-between items-end">
           <div>
-            <h3 className="text-3xl font-black tracking-tight">
-              ${priceData?.usd?.toFixed(2) || '58.75'}
-              <span className="text-sm font-medium text-gray-500 ml-1">USD/PI</span>
-            </h3>
-            <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-semibold flex items-center space-x-1">
-              <span>Coingecko Live Data</span>
-              <span className="inline-block w-1 h-1 rounded-full bg-gray-600"></span>
-              <span>Est. {priceData?.inr?.toLocaleString() || '4,200'} INR</span>
-            </p>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton width="120px" height="36px" />
+                <Skeleton width="180px" height="14px" />
+              </div>
+            ) : (
+              <>
+                <h3 className="text-3xl font-black tracking-tight">
+                  ${priceData?.usd?.toFixed(2) || '58.75'}
+                  <span className="text-sm font-medium text-gray-500 ml-1">USD/PI</span>
+                </h3>
+                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-semibold flex items-center space-x-1">
+                  <span>Coingecko Live Data</span>
+                  <span className="inline-block w-1 h-1 rounded-full bg-gray-600"></span>
+                  <span>Est. {priceData?.inr?.toLocaleString() || '4,200'} INR</span>
+                </p>
+              </>
+            )}
           </div>
           <button
             onClick={loadData}

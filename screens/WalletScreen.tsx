@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Search, Activity, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Skeleton from '../components/Skeleton';
 
 const WalletScreen: React.FC = () => {
   const { user, authenticate } = useAuth();
@@ -145,7 +146,36 @@ const WalletScreen: React.FC = () => {
         </div>
       </div>
 
-      {result && (
+      {checking ? (
+        <div className="glass-card p-6 rounded-[2.5rem] border-2 border-cyan-500/30 neon-border-blue">
+          <div className="flex justify-between items-start mb-6">
+            <div className="space-y-2">
+              <Skeleton width="100px" height="14px" />
+              <div className="flex items-baseline space-x-2 mt-2">
+                <Skeleton width="120px" height="36px" />
+                <Skeleton width="20px" height="24px" />
+              </div>
+            </div>
+            <Skeleton variant="rect" width="36px" height="36px" />
+          </div>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+            <div className="flex items-center space-x-2">
+              <Skeleton variant="circle" width="14px" height="14px" />
+              <div className="space-y-1">
+                <Skeleton width="60px" height="9px" />
+                <Skeleton width="80px" height="12px" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Skeleton variant="circle" width="8px" height="8px" />
+              <div className="space-y-1">
+                <Skeleton width="60px" height="9px" />
+                <Skeleton width="50px" height="12px" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : result && (
         <div className="glass-card p-6 rounded-[2.5rem] border-2 border-cyan-500/30 neon-border-blue animate-in slide-in-from-top-4 duration-500">
           <div className="flex justify-between items-start mb-6">
             <div>

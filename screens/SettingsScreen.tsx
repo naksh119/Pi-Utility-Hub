@@ -18,6 +18,8 @@ import {
 import { privacyPolicyContent } from '../data/privacyPolicy';
 import { helpSupportContent } from '../data/helpSupport';
 import { useTheme } from '../contexts/ThemeContext';
+import Skeleton from '../components/Skeleton';
+import { useAuth } from '../contexts/AuthContext';
 
 type SettingsView = 'main' | 'language' | 'privacy' | 'help' | 'about';
 
@@ -29,6 +31,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
     const [currentView, setCurrentView] = useState<SettingsView>('main');
     const [notifications, setNotifications] = useState(true);
     const { theme, toggleTheme } = useTheme();
+    const { user } = useAuth();
     const darkMode = theme === 'dark';
     const [language, setLanguage] = useState('English');
 
@@ -227,12 +230,21 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
         <div className="animate-in slide-in-from-left-4 duration-300">
             {/* Profile Section */}
             <div className="glass-card p-4 rounded-2xl flex items-center space-x-4 mb-6">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 text-white font-bold text-xl">
-                    JD
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 text-white font-bold text-xl overflow-hidden">
+                    {user ? user.username?.[0].toUpperCase() || 'JD' : <Skeleton variant="circle" width="100%" height="100%" />}
                 </div>
                 <div>
-                    <h3 className="font-bold">John Doe</h3>
-                    <p className="text-xs text-gray-400">@johndoe_pi</p>
+                    {user ? (
+                        <>
+                            <h3 className="font-bold">{user.username || 'John Doe'}</h3>
+                            <p className="text-xs text-gray-400">@{user.username || 'johndoe_pi'}</p>
+                        </>
+                    ) : (
+                        <div className="space-y-2">
+                            <Skeleton width="100px" height="18px" />
+                            <Skeleton width="80px" height="12px" />
+                        </div>
+                    )}
                 </div>
                 <div className="flex-1 text-right">
                     <button className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors">

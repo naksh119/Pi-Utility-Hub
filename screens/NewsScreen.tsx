@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Share2, Bookmark, Heart, ExternalLink, RefreshCw, Loader2 } from 'lucide-react';
 import { fetchPiNetworkNews, getRelativeTime, categorizeNews, type NewsItem } from '../utils/newsApi';
+import Skeleton from '../components/Skeleton';
 
 const NewsScreen: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -77,9 +78,36 @@ const NewsScreen: React.FC = () => {
   // Show loading state (initial)
   if (loading && news.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-        <p className="text-sm text-gray-400">Loading latest Pi Network news...</p>
+      <div className="space-y-6 pt-2">
+        <div className="flex justify-between items-center mb-6">
+          <Skeleton width="120px" height="28px" />
+          <div className="flex space-x-2">
+            <Skeleton width="60px" height="24px" className="rounded-full" />
+            <Skeleton width="40px" height="24px" className="rounded-full" />
+          </div>
+        </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="glass-card rounded-[2rem] overflow-hidden border border-gray-100 dark:border-white/5">
+            <Skeleton variant="rect" width="100%" height="176px" />
+            <div className="p-5 space-y-3">
+              <div className="flex justify-between">
+                <Skeleton width="60px" height="12px" />
+                <Skeleton width="80px" height="12px" />
+              </div>
+              <Skeleton width="100%" height="24px" />
+              <Skeleton width="100%" height="16px" />
+              <Skeleton width="70%" height="16px" />
+              <div className="pt-4 flex justify-between items-center border-t border-white/5">
+                <div className="flex space-x-4">
+                  <Skeleton width="40px" height="20px" />
+                  <Skeleton width="60px" height="28px" className="rounded-full" />
+                  <Skeleton width="40px" height="20px" />
+                </div>
+                <Skeleton width="20px" height="20px" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

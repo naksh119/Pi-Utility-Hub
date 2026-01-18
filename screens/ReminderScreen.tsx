@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Bell, Clock, CheckCircle2 } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 
 const ReminderScreen: React.FC = () => {
   const [enabled, setEnabled] = useState(true);

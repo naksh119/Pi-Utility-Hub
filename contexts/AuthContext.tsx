@@ -37,34 +37,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         const initPi = async () => {
             try {
-                // Check if running in development (localhost) and outside of an iframe (not in Sandbox)
+                // Environment detection
                 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                // Note: Pi Sandbox loads app in an iframe. If we are top level on localhost, we are likely not in the sandbox.
-                // However, the error "does not match the recipient window's origin" suggests we might be sending messages to a wrong target.
+                const isNetlify = window.location.hostname.includes('netlify.app');
 
                 if (isLocalhost) {
-                    console.log("Running on localhost. Attempting to mock authentication if SDK fails.");
-                }
-
-                // Double check availability
-                if (!window.Pi) {
-                    throw new Error("Pi SDK not loaded.");
-                }
-
-                if (isLocalhost) {
-                    console.info("Info: Pi SDK initialization skipped on localhost to avoid CORS errors. Use 'Continue as Guest' to login.");
+                    console.log("Running on localhost. Pi SDK initialization skipped to avoid CORS/Origin errors.");
                     setLoading(false);
                     return;
                 }
 
+                if (!window.Pi) {
+                    throw new Error("Pi SDK not loaded.");
+                }
+
+                // If on Netlify or a custom domain, sandbox should likely be false unless we are testing
+                // The error "The target origin provided ('https://app-cdn.minepi.com') does not match the recipient window's origin"
+                // often happens when sandbox: true is used outside the actual Pi Sandbox environment.
+                const useSandbox = !isNetlify && !window.location.hostname.includes('piutilityapp.netlify.app');
+
                 try {
-                    // Dynamically detect sandbox mode from URL or hostname
-                    const isSandbox = window.location.search.includes('sandbox=1') || window.location.hostname.includes('sandbox');
-                    window.Pi.init({ version: '2.0', sandbox: isSandbox });
-                    console.log(`Pi SDK initialized (sandbox: ${isSandbox})`);
+                    // Initialize SDK
+                    window.Pi.init({ version: '2.0', sandbox: useSandbox });
+                    console.log(`Pi SDK initialized (sandbox: ${useSandbox})`);
                 } catch (e) {
-                    // This block might still be relevant for other environment errors
-                    throw e;
+                    console.warn("Pi SDK already initialized or failed to init:", e);
                 }
 
                 const scopes = ['username', 'payments'];
@@ -72,22 +69,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.log('Incomplete payment found', payment);
                 };
 
-                const authResult = await window.Pi.authenticate(scopes, onIncompletePaymentFound);
-                console.log("Pi Auth Result:", authResult);
-                setUser(authResult.user);
-            } catch (err) {
-                console.error('Pi Authentication failed', err);
+                // Add a timeout for authentication to prevent infinite loading if SDK hangs
+                const authPromise = window.Pi.authenticate(scopes, onIncompletePaymentFound);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Authentication timed out")), 10000)
+                );
 
-                // Fallback for localhost if even the initial check didn't catch it or if authenticate caught the error
+                const authResult = await Promise.race([authPromise, timeoutPromise]) as any;
+
+                console.log("Pi Auth Result:", authResult);
+                if (authResult && authResult.user) {
+                    setUser(authResult.user);
+                } else {
+                    throw new Error("Invalid authentication result");
+                }
+            } catch (err) {
+                console.error('Pi Authentication failed:', err);
+
+                // Fallback for non-Pi environments or errors
                 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                if (isLocalhost) {
-                    console.warn("Authentication failed on localhost. Fallback to mock user.");
-                    setUser({
-                        username: "TestUser",
-                        uid: "test-uid-123",
-                        accessToken: "mock-token"
-                    });
-                    setError(null); // Clear error since we are mocking
+                const isNetlify = window.location.hostname.includes('netlify.app');
+
+                if (isLocalhost || isNetlify) {
+                    // We don't automatically set user for Netlify unless it's a known debug state
+                    // But we clear the error so the user can use Guest mode if they choose
+                    setError(err instanceof Error ? err.message : 'Authentication failed');
                 } else {
                     setError(err instanceof Error ? err.message : 'Authentication failed');
                 }
@@ -103,12 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 clearInterval(checkInterval);
                 initPi();
             } else {
-
                 attempts++;
-                if (attempts > 20) { // 2 seconds
+                if (attempts > 30) { // 3 seconds
                     clearInterval(checkInterval);
-                    // If checking fails, try initPi anyway to trigger error handling
-                    initPi();
+                    initPi(); // Try anyway to trigger error handling
                 }
             }
         }, 100);

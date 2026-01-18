@@ -20,10 +20,14 @@
           // Simply checking for netlify.app is incorrect as it causes origin mismatch in the real Pi Browser
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           const isInIframe = window.self !== window.top;
-          const useSandbox = isLocal || isInIframe;
 
-          window.Pi.init({ version: "2.0", sandbox: useSandbox });
-          console.log("Pi SDK 2.0 Initialized, sandbox:", useSandbox, " (Local:", isLocal, "Iframe:", isInIframe, ")");
+          if (isLocal || isInIframe) {
+            const useSandbox = true; // Local or Iframe both use sandbox/mock bridge
+            window.Pi.init({ version: "2.0", sandbox: useSandbox });
+            console.log("Pi SDK 2.0 Initialized, sandbox:", useSandbox, " (Local:", isLocal, "Iframe:", isInIframe, ")");
+          } else {
+            console.log("Direct access detected on production URL. Pi SDK init skipped to prevent origin mismatch. Please use Pi Sandbox for testing.");
+          }
         } catch (e) {
           console.warn("Pi SDK init already called or failed:", e);
         }

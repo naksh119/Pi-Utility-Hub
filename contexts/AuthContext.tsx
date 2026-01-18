@@ -67,6 +67,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
 
+        // Prevention for standalone production mode (which causes origin mismatch)
+        if (!isLocalhost && !isInIframe && isPiUserAgent) {
+            setError("Pi Authentication requires the Pi Sandbox for testing on Live URLs. Please visit https://sandbox.minepi.com, enter your URL, and try again.");
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
